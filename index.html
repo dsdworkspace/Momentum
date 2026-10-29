@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#13213C">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Momentum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#E8EDF3;--card:#fff;--ink:#13213C;--mut:#5B6882;--line:#D5DDE8;--teal:#12A594;--sun:#F5A400;--rose:#E5484D;--btn:#13213C;--btnt:#fff;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D1526;--card:#172239;--ink:#EAF0FA;--mut:#8D9BB5;--line:#26334F;--btn:#EAF0FA;--btnt:#0D1526;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0D1526;--card:#172239;--ink:#EAF0FA;--mut:#8D9BB5;--line:#26334F;--btn:#EAF0FA;--btnt:#0D1526;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;font-size:16px}
+h1,h2,.num{font-family:'Bricolage Grotesque','DM Sans',system-ui,sans-serif;margin:0}
+main{max-width:640px;margin:0 auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom,0px))}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.top{display:flex;align-items:center;gap:18px;padding:8px 0 18px}
+.ring{position:relative;width:112px;height:112px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:grid;place-items:center;font-size:30px;font-weight:800}
+.top h1{font-size:26px;font-weight:800;line-height:1.1}
+.top p{margin:6px 0 0;color:var(--mut);max-width:30ch}
+.card{background:var(--card);border-radius:18px;padding:14px;margin-bottom:12px;border:1px solid var(--line)}
+.sec{font-size:15px;font-weight:700;margin:20px 2px 10px;color:var(--mut);display:flex;justify-content:space-between;align-items:center}
+.add{display:flex;gap:8px;margin-bottom:12px}
+input,select{font:inherit;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0}
+.add input{flex:1}
+.btn{background:var(--btn);color:var(--btnt);border-radius:14px;padding:12px 18px;font-weight:700}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chip{flex:none;display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:var(--card);border:1.5px solid var(--line);font-weight:500;transition:transform .15s}
+.chip:active{transform:scale(.95)}
+.chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.fl{font-weight:700;font-size:14px}
+.task{display:flex;align-items:center;gap:12px;padding:12px 6px;border-bottom:1px solid var(--line)}
+.task:last-child{border:0}
+.chk{width:28px;height:28px;border-radius:50%;border:2px solid var(--mut);flex:none;display:grid;place-items:center;color:#fff;font-size:15px}
+.done .chk{background:var(--teal);border-color:var(--teal)}
+.done .tt{text-decoration:line-through;color:var(--mut)}
+.tt{flex:1;word-break:break-word}
+.ic{color:var(--mut);padding:6px 8px;font-size:18px}
+.ic.star{color:var(--sun)}
+.arm{color:var(--rose);font-weight:700;font-size:14px}
+.empty{color:var(--mut);text-align:center;padding:18px 8px}
+.bar{height:12px;border-radius:99px;background:var(--line);overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;background:var(--teal);border-radius:99px;transition:width .4s}
+.hit .bar i{background:var(--sun)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.gt{font-weight:700}
+.sub{color:var(--mut);font-size:14px}
+.sm{background:var(--bg);border-radius:12px;padding:8px 14px;font-weight:700}
+.week{display:flex;gap:6px;margin-top:10px}
+.dot{flex:1;text-align:center;font-size:12px;color:var(--mut)}
+.dot b{display:block;height:30px;border-radius:10px;background:var(--bg);margin-bottom:3px;border:1.5px solid transparent}
+.dot.on b{background:var(--teal)}
+.dot.today b{border-color:var(--sun)}
+.big{font-size:34px;font-weight:800;color:var(--sun);line-height:1}
+.form{display:grid;grid-template-columns:1fr 90px 110px auto;gap:8px;margin-bottom:12px}
+@media(max-width:520px){.form{grid-template-columns:1fr 1fr}.form input:first-child{grid-column:1/-1}}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;gap:4px;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
+nav button{flex:1;max-width:180px;padding:10px 4px;border-radius:14px;font-weight:700;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px}
+nav button span{font-size:20px}
+nav .on{background:var(--bg);color:var(--ink)}
+#toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--btn);color:var(--btnt);padding:12px 18px;border-radius:14px;font-weight:700;opacity:0;transition:.3s;pointer-events:none;max-width:90%;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.foot{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.foot button{color:var(--mut);font-size:14px;padding:8px 12px;border:1px solid var(--line);border-radius:12px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav id="nav"></nav>
+<div id="toast" role="status"></div>
+<script>
+var mem=null;
+function load(){try{var r=localStorage.getItem('momentum.v1');if(r)return JSON.parse(r)}catch(e){}return mem||{tasks:[],habits:[],goals:[],tab:'today'}}
+function save(){try{localStorage.setItem('momentum.v1',JSON.stringify(S))}catch(e){mem=S}}
+var S=load();S.tab=S.tab||'today';
+var arm=null,deferred=null;
+function pad(n){return String(n).padStart(2,'0')}
+function day(d){d=d||new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function wkKey(){var d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return 'w'+day(d)}
+function key(p){var d=new Date();return p==='week'?wkKey():p==='month'?'m'+d.getFullYear()+'-'+pad(d.getMonth()+1):'y'+d.getFullYear()}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function streak(h){var d=new Date();if(h.log.indexOf(day(d))<0)d.setDate(d.getDate()-1);var n=0;while(h.log.indexOf(day(d))>=0){n++;d.setDate(d.getDate()-1)}return n}
+function best(h){var l=h.log.slice().sort(),b=0,c=0,p=null;l.forEach(function(x){var t=new Date(x+'T00:00:00');if(p&&Math.round((t-p)/864e5)===1)c++;else c=1;p=t;if(c>b)b=c});return b}
+function rollover(){var t=day();S.tasks=S.tasks.filter(function(x){return !x.done||x.on===t});
+S.goals.forEach(function(g){var k=key(g.p);if(g.key!==k){if(g.key&&g.prog>=g.target)g.hist=(g.hist||0)+1;g.key=k;g.prog=0}})}
+rollover();
+var EM=['💧','🏃','📖','🧘','💪','🌿','😴','✍️','🥗','🎯'];
+var PL={week:'This week',month:'This month',year:'This year'};
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.className='show';clearTimeout(toast.t);toast.t=setTimeout(function(){t.className=''},2200)}
+function pct(){var t=day(),a=S.tasks.length,b=S.tasks.filter(function(x){return x.done}).length,c=S.habits.length,d=S.habits.filter(function(h){return h.log.indexOf(t)>=0}).length;return a+c?Math.round((b+d)/(a+c)*100):0}
+function msg(p,n){if(!n)return'Add one task or habit to start your day.';if(p===0)return'Fresh day. Pick one small win.';if(p<50)return'Good start. Keep the chain going.';if(p<100)return'More than halfway there.';return'Day cleared. Your streaks are safe.'}
+function head(){var p=pct(),n=S.tasks.length+S.habits.length,C=2*Math.PI*48,h=new Date().getHours(),g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+return '<div class="top"><div class="ring"><svg width="112" height="112" viewBox="0 0 112 112"><circle cx="56" cy="56" r="48" fill="none" stroke="var(--line)" stroke-width="10"/><circle cx="56" cy="56" r="48" fill="none" stroke="'+(p===100?'var(--sun)':'var(--teal)')+'" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+(C*(1-p/100))+'" style="transition:stroke-dashoffset .6s"/></svg><div class="num">'+p+'%</div></div><div><h1>'+g+', Gagan</h1><p>'+msg(p,n)+'</p></div></div>'}
+function today(){var t=day(),o='';
+o+='<form class="add" data-f="task"><input id="nt" placeholder="Add a task, press Enter" maxlength="120" autocomplete="off"><button class="btn">Add</button></form>';
+if(S.habits.length){o+='<div class="sec">Daily habits</div><div class="chips">'+S.habits.map(function(h){var on=h.log.indexOf(t)>=0,s=streak(h);return '<button class="chip'+(on?' on':'')+'" data-a="hab" data-id="'+h.id+'">'+h.e+' '+esc(h.n)+' <span class="fl">🔥'+s+'</span></button>'}).join('')+'</div>'}
+o+='<div class="sec">Tasks</div><div class="card">';
+var l=S.tasks.slice().sort(function(a,b){return (a.done-b.done)||((b.star?1:0)-(a.star?1:0))});
+o+=l.length?l.map(function(x){return '<div class="task'+(x.done?' done':'')+'"><button class="chk" data-a="tog" data-id="'+x.id+'" aria-label="Toggle task">'+(x.done?'✓':'')+'</button><span class="tt">'+esc(x.t)+'</span><button class="ic'+(x.star?' star':'')+'" data-a="star" data-id="'+x.id+'" aria-label="Priority">'+(x.star?'★':'☆')+'</button>'+(arm===x.id?'<button class="arm" data-a="del" data-id="'+x.id+'">Delete?</button>':'<button class="ic" data-a="arm" data-id="'+x.id+'" aria-label="Delete">✕</button>')+'</div>'}).join(''):'<div class="empty">Nothing here yet. Add your first task above.</div>';
+return o+'</div>'}
+function goals(){var o='<div class="sec">Goals</div><form class="form" data-f="goal"><input id="gt" placeholder="New goal, e.g. Read books" maxlength="80"><input id="gn" type="number" min="1" placeholder="Target" inputmode="numeric"><select id="gp"><option value="week">Weekly</option><option value="month" selected>Monthly</option><option value="year">Yearly</option></select><button class="btn">Add</button></form>';
+['week','month','year'].forEach(function(p){var l=S.goals.filter(function(g){return g.p===p});if(!l.length)return;o+='<div class="sec">'+PL[p]+'</div>';
+l.forEach(function(g){var r=Math.min(100,Math.round(g.prog/g.target*100)),hit=g.prog>=g.target;
+o+='<div class="card'+(hit?' hit':'')+'"><div class="row"><span class="gt">'+esc(g.t)+(hit?' 🏆':'')+'</span>'+(arm===g.id?'<button class="arm" data-a="delg" data-id="'+g.id+'">Delete?</button>':'<button class="ic" data-a="arm" data-id="'+g.id+'" aria-label="Delete goal">✕</button>')+'</div><div class="bar"><i style="width:'+r+'%"></i></div><div class="row"><span class="sub">'+g.prog+' of '+g.target+' ('+r+'%)'+(g.hist?' · hit '+g.hist+'x before':'')+'</span><span><button class="sm" data-a="gm" data-id="'+g.id+'" aria-label="Minus one">−1</button> <button class="sm" data-a="gp" data-id="'+g.id+'" aria-label="Plus one">+1</button></span></div></div>'})});
+if(!S.goals.length)o+='<div class="card empty">Set a weekly, monthly or yearly target. Tap +1 whenever you make progress.</div>';
+return o}
+function habits(){var o='<div class="sec">Habits</div><form class="add" data-f="habit"><input id="nh" placeholder="New daily habit, e.g. Gym" maxlength="40" autocomplete="off"><button class="btn">Add</button></form>';
+o+=S.habits.map(function(h){var s=streak(h),w='';for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);var k=day(d);w+='<button class="dot'+(h.log.indexOf(k)>=0?' on':'')+(i===0?' today':'')+'" data-a="hday" data-id="'+h.id+'" data-d="'+k+'"><b></b>'+'SMTWTFS'[d.getDay()]+'</button>'}
+return '<div class="card"><div class="row"><div><div class="gt">'+h.e+' '+esc(h.n)+'</div><div class="sub">Best streak: '+best(h)+' days · '+h.log.length+' total</div></div><div style="text-align:right"><div class="big">🔥'+s+'</div>'+(arm===h.id?'<button class="arm" data-a="delh" data-id="'+h.id+'">Delete?</button>':'<button class="ic" data-a="arm" data-id="'+h.id+'" aria-label="Delete habit">✕</button>')+'</div></div><div class="week">'+w+'</div></div>'}).join('');
+if(!S.habits.length)o+='<div class="card empty">Habits build streaks. Add one and tick it each day.</div>';
+return o}
+function foot(){return '<div class="foot">'+(deferred?'<button data-a="inst">Install app</button>':'')+'<button data-a="theme">Light / dark</button><button data-a="exp">Copy backup</button><button data-a="imp">Restore backup</button></div>'}
+function render(){var v=S.tab==='goals'?goals():S.tab==='habits'?habits():today();
+document.getElementById('app').innerHTML=head()+v+foot();
+document.getElementById('nav').innerHTML=[['today','✅','Today'],['goals','🎯','Goals'],['habits','🔥','Habits']].map(function(t){return '<button class="'+(S.tab===t[0]?'on':'')+'" data-a="tab" data-id="'+t[0]+'"><span>'+t[1]+'</span>'+t[2]+'</button>'}).join('')}
+function find(a,id){return S[a].filter(function(x){return x.id===id})[0]}
+function after(){save();render()}
+function checkDone(old){var n=pct();if(old<100&&n===100)toast('🎉 Day cleared! Great work.')}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a,id=b.dataset.id,o=pct();
+if(a==='tab'){S.tab=id;arm=null;return after()}
+if(a==='tog'){var t=find('tasks',id);t.done=!t.done;t.on=t.done?day():null;after();return checkDone(o)}
+if(a==='star'){var t2=find('tasks',id);t2.star=!t2.star;return after()}
+if(a==='arm'){arm=id;render();return setTimeout(function(){if(arm===id){arm=null;render()}},3000)}
+if(a==='del'){S.tasks=S.tasks.filter(function(x){return x.id!==id});arm=null;return after()}
+if(a==='delg'){S.goals=S.goals.filter(function(x){return x.id!==id});arm=null;return after()}
+if(a==='delh'){S.habits=S.habits.filter(function(x){return x.id!==id});arm=null;return after()}
+if(a==='hab'||a==='hday'){var h=find('habits',id),k=b.dataset.d||day(),i=h.log.indexOf(k);if(i>=0)h.log.splice(i,1);else{h.log.push(k);var s=streak(h);if([3,7,14,21,30,50,100,365].indexOf(s)>=0&&k===day())toast('🔥 '+s+'-day streak on '+h.n+'!')}after();return checkDone(o)}
+if(a==='gp'){var g=find('goals',id);g.prog++;after();if(g.prog===g.target)toast('🏆 Goal reached: '+g.t);return}
+if(a==='gm'){var g2=find('goals',id);g2.prog=Math.max(0,g2.prog-1);return after()}
+if(a==='theme'){var r=document.documentElement,dk=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=dk?'light':'dark';return}
+if(a==='exp'){var txt=JSON.stringify(S);(navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){toast('Backup copied. Paste it somewhere safe.')},function(){prompt('Copy your backup:',txt)});return}
+if(a==='imp'){var v=prompt('Paste your backup here:');if(v){try{var d=JSON.parse(v);if(d.tasks&&d.habits&&d.goals){S=d;rollover();after();toast('Backup restored')}else throw 0}catch(x){toast('That backup is not valid')}}return}
+if(a==='inst'&&deferred){deferred.prompt();deferred=null;render()}
+});
+document.addEventListener('submit',function(e){e.preventDefault();var f=e.target.dataset.f;
+if(f==='task'){var v=document.getElementById('nt').value.trim();if(!v)return;S.tasks.push({id:uid(),t:v,done:false,star:false});after();document.getElementById('nt').focus()}
+if(f==='habit'){var n=document.getElementById('nh').value.trim();if(!n)return;S.habits.push({id:uid(),n:n,e:EM[S.habits.length%EM.length],log:[]});after()}
+if(f==='goal'){var t=document.getElementById('gt').value.trim(),n2=parseInt(document.getElementById('gn').value,10),p=document.getElementById('gp').value;if(!t||!(n2>0)){toast('Add a title and a target number');return}S.goals.push({id:uid(),t:t,p:p,target:n2,prog:0,key:key(p),hist:0});after()}
+});
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;render()});
+document.addEventListener('visibilitychange',function(){if(!document.hidden){rollover();render()}});
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+render();
+</script>
+</body>
+</html>
