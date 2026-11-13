@@ -756,6 +756,7 @@
   var deferred = null;
   var profileOpen = false;
   var habitDetail = null;
+  var quickOpen = false;
   function pad(n) {
     return String(n).padStart(2, "0");
   }
@@ -918,7 +919,7 @@
     var panel = profileOpen ? '<div class="profile-panel"><h3>Switch profile</h3><select id="profilepick" aria-label="Active profile">' + S.profiles.map(function(p2) {
       return '<option value="' + p2.id + '"' + (p2.id === S.activeProfile ? " selected" : "") + ">" + esc(p2.name) + "</option>";
     }).join("") + '</select><form data-f="profile"><input id="newprofile" placeholder="New profile name" maxlength="32" autocomplete="off"><button class="btn">Add</button></form>' + (S.profiles.length > 1 ? '<button class="profile-remove" data-a="profilerem">Remove current profile</button>' : "") + "</div>" : "";
-    return '<div class="top"><div><div class="eyebrow">MOMENTUM \xB7 TODAY</div><h1>' + g + ", " + esc(name) + "</h1><p>" + msg(p, n) + '</p></div><button class="profile-btn" data-a="profilemenu" aria-label="Profiles"><span class="avatar">' + esc(initial) + '</span><span class="profile-name">' + esc(name) + "</span><span>\u2304</span></button>" + panel + '</div><div class="progress-strip"><span>Today\u2019s progress</span><b>' + p + '%</b></div><div class="progress"><i style="width:' + p + '%"></i></div>';
+    return '<div class="top"><div><div class="eyebrow">' + (S.tab === "today" ? "TODAY \xB7 " + (/* @__PURE__ */ new Date()).toLocaleDateString(void 0, { weekday: "long", month: "long", day: "numeric" }) : "MOMENTUM") + "</div><h1>" + (S.tab === "today" ? g + ", " + esc(name) : S.tab === "insights" ? "Insights" : S.tab === "habits" ? "Habits" : "Profile") + "</h1>" + (S.tab === "today" ? "<p>" + msg(p, n) + "</p>" : "") + "</div>" + (S.tab === "today" ? '<button class="profile-btn" data-a="tab" data-id="profile" aria-label="Profile"><span class="avatar">' + esc(initial) + "</span></button>" : "") + panel + "</div>" + (S.tab === "today" ? '<div class="progress-strip"><span>Today\u2019s progress</span><b>' + p + '%</b></div><div class="progress"><i style="width:' + p + '%"></i></div>' : "");
   }
   function taskRow(x, done) {
     return '<div class="task' + (done ? " done" : "") + '"><button class="chk" data-a="tog" data-id="' + x.id + '" aria-label="Toggle task">' + (done ? "\u2713" : "") + '</button><span class="tt">' + esc(x.t) + (x.due ? '<small class="hint"> \xB7 \u{1F514} ' + esc(x.due.replace("T", " ")) + "</small>" : "") + '</span><button class="ic' + (x.star ? " star" : "") + '" data-a="star" data-id="' + x.id + '" aria-label="Priority">' + (x.star ? "\u2605" : "\u2606") + "</button>" + (arm === x.id ? '<button class="arm" data-a="del" data-id="' + x.id + '">Delete?</button>' : '<button class="ic" data-a="arm" data-id="' + x.id + '" aria-label="Delete">\u2715</button>') + "</div>";
@@ -981,6 +982,41 @@
     if (!S.habits.length) o += '<div class="card empty">Habits build streaks. Add one and tick it each day.</div>';
     return o;
   }
+  function insights() {
+    var total = S.tasks.length + S.habits.reduce(function(n, h) {
+      return n + h.log.length;
+    }, 0), done = S.tasks.filter(function(t) {
+      return !!t.doneOn || t.done;
+    }).length + S.habits.reduce(function(n, h) {
+      return n + h.log.length;
+    }, 0), rate = total ? Math.round(done / total * 100) : 0;
+    var w = "";
+    for (var i = 6; i >= 0; i--) {
+      var d = /* @__PURE__ */ new Date();
+      d.setHours(12, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      var k = day(d), c = S.tasks.filter(function(t) {
+        return t.doneOn === k;
+      }).length + S.habits.filter(function(h) {
+        return h.log.indexOf(k) >= 0;
+      }).length;
+      w += '<div class="bar-day"><i style="height:' + Math.max(6, Math.min(100, c * 18)) + '%"></i><span>' + "SMTWTFS"[d.getDay()] + "</span></div>";
+    }
+    return '<div class="card insight-hero"><span class="hint">ALL TIME COMPLETION</span><strong>' + rate + '%</strong><span class="sub">' + done + " completed \xB7 " + S.habits.reduce(function(n, h) {
+      return n + h.log.length;
+    }, 0) + ' habit check-ins</span></div><div class="sec">This week</div><div class="card chart">' + w + '</div><div class="sec">Your streaks</div>' + (S.habits.length ? S.habits.map(function(h) {
+      return '<div class="card row"><span>' + h.e + " " + esc(h.n) + "</span><b>\u{1F525} " + streak(h) + " day" + (streak(h) === 1 ? "" : "s") + "</b></div>";
+    }).join("") : '<div class="card empty">Add a habit to start building your streaks.</div>');
+  }
+  function profilePage() {
+    var name = profile().name, initial = name.trim().charAt(0).toUpperCase() || "P";
+    return '<div class="card profile-hero"><span class="avatar">' + esc(initial) + "</span><h2>" + esc(name) + '</h2><p>Build better habits, one day at a time.</p></div><div class="sec">Profiles</div><div class="card"><select id="profilepick" aria-label="Active profile">' + S.profiles.map(function(p) {
+      return '<option value="' + p.id + '"' + (p.id === S.activeProfile ? " selected" : "") + ">" + esc(p.name) + "</option>";
+    }).join("") + '</select><form class="profile-form" data-f="profile"><input id="newprofile" placeholder="Add a profile" maxlength="32"><button class="btn">Add</button></form>' + (S.profiles.length > 1 ? '<button class="profile-remove" data-a="profilerem">Remove current profile</button>' : "") + '</div><div class="sec">Personal goals</div>' + goals() + '<div class="sec">Preferences & data</div><div class="card settings-list"><button data-a="theme">Appearance <span>' + (S.theme === "dark" ? "Dark mode" : S.theme === "light" ? "Light mode" : "System default") + ' \u203A</span></button><button data-a="exp">Export backup <span>\u203A</span></button><button data-a="imp">Restore backup <span>\u203A</span></button>' + (deferred ? '<button data-a="inst">Install Momentum <span>\u203A</span></button>' : "") + "</div>";
+  }
+  function quickSheet() {
+    return quickOpen ? '<div class="sheet-back" data-a="quickclose"><section class="sheet" role="dialog" aria-modal="true" aria-label="Quick add"><div class="sheet-handle"></div><div class="row"><h2>Quick add</h2><button class="ic" data-a="quickclose" aria-label="Close">\xD7</button></div><form class="add" data-f="task"><input id="nt" placeholder="What do you need to do?" maxlength="120" autocomplete="off" autofocus><button class="btn">Add</button><details><summary class="hint">Add a reminder</summary><input id="ndue" type="datetime-local" aria-label="Reminder date and time"></details></form></section></div>' : "";
+  }
   function foot() {
     return '<div class="foot">' + (deferred ? '<button data-a="inst">Install</button>' : "") + '<button data-a="theme">' + (S.theme === "light" ? "Dark mode" : S.theme === "dark" ? "Light mode" : "Theme") + '</button><button data-a="exp">Backup</button><button data-a="imp">Restore</button></div>';
   }
@@ -999,12 +1035,12 @@
     return '<div class="modal-backdrop" data-a="habitclose"><section class="modal" role="dialog" aria-modal="true" aria-label="Habit check-in detail"><h2>' + h.e + " " + esc(h.n) + "</h2><p>" + label + "</p><p><b>" + (checked ? "Completed" : "Not checked in") + "</b>" + (checked ? " \xB7 " + run + " day streak at this date" : "") + '</p><div class="week-mini">' + wk + '</div><div class="row"><button class="sm" data-a="habitclose">Close</button><button class="btn" data-a="hdaytoggle" data-id="' + h.id + '" data-d="' + d + '">' + (checked ? "Undo check-in" : "Mark complete") + "</button></div></section></div>";
   }
   function render() {
-    var v = S.tab === "goals" ? goals() : S.tab === "habits" ? habits() : today();
-    document.getElementById("app").innerHTML = head() + v + foot() + habitModal();
+    var v = S.tab === "insights" ? insights() : S.tab === "habits" ? habits() : S.tab === "profile" ? profilePage() : today();
+    document.getElementById("app").innerHTML = head() + v + foot() + habitModal() + quickSheet();
     if (!S.theme || S.theme === "system") document.documentElement.removeAttribute("data-theme");
     else document.documentElement.dataset.theme = S.theme;
-    document.getElementById("nav").innerHTML = [["today", "\u2705", "Today"], ["goals", "\u{1F3AF}", "Goals"], ["habits", "\u{1F525}", "Habits"]].map(function(t) {
-      return '<button class="' + (S.tab === t[0] ? "on" : "") + '" data-a="tab" data-id="' + t[0] + '"><span>' + t[1] + "</span>" + t[2] + "</button>";
+    document.getElementById("nav").innerHTML = [["today", "\u2302", "Today"], ["insights", "\u25F7", "Insights"], ["quick", "\uFF0B", ""], ["habits", "\u25A6", "Habits"], ["profile", "\u25CB", "Profile"]].map(function(t) {
+      return '<button class="' + (S.tab === t[0] ? "on" : "") + (t[0] === "quick" ? " nav-add" : "") + '" data-a="' + (t[0] === "quick" ? "quick" : "tab") + '" data-id="' + t[0] + '"><span>' + t[1] + "</span>" + (t[2] ? "<small>" + t[2] + "</small>" : "") + "</button>";
     }).join("");
   }
   function find(a, id) {
@@ -1029,6 +1065,17 @@
       S.tab = id;
       arm = null;
       return after();
+    }
+    if (a === "quick") {
+      quickOpen = true;
+      return render();
+    }
+    if (a === "quickclose") {
+      if (e.target === b || b.tagName === "BUTTON") {
+        quickOpen = false;
+        return render();
+      }
+      return;
     }
     if (a === "profilemenu") {
       profileOpen = !profileOpen;
@@ -1219,9 +1266,9 @@
       if (!v) return;
       var due = document.getElementById("ndue").value, ntask = { id: uid(), t: v, done: false, star: false, createdOn: viewDay };
       S.tasks.push(ntask);
+      quickOpen = false;
       after();
       if (due) scheduleReminder(ntask, due);
-      document.getElementById("nt").focus();
     }
     if (f === "habit") {
       var n = document.getElementById("nh").value.trim();

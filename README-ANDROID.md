@@ -9,6 +9,10 @@ user-controlled backup. Re-enable network access deliberately if adding online A
 
 ## Features
 
+- Minimal five-action navigation: Today, Insights, Quick Add, Habits, and Profile.
+- Quick Add opens a focused bottom sheet so a task can be entered immediately, with an optional reminder.
+- Separate Insights view for completion activity and active habit streaks.
+- Profile screen groups local profiles, personal goals, appearance, and backup controls.
 - Saved light or dark theme.
 - Multiple local profiles, each with separate habits, goals, and tasks.
 - Date-by-date task history grouped into To do and Completed.
