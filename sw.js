@@ -1,5 +1,5 @@
 // Change this number whenever you update the app files, so phones fetch the new version.
-const CACHE = 'momentum-v4';
+const CACHE = 'momentum-v5';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
 
 self.addEventListener('install', e => {

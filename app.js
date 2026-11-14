@@ -756,7 +756,8 @@
   var deferred = null;
   var profileOpen = false;
   var habitDetail = null;
-  var quickOpen = false;
+  var quickOpen = "";
+  var editItem = null;
   function pad(n) {
     return String(n).padStart(2, "0");
   }
@@ -766,7 +767,7 @@
   }
   if (!Array.isArray(S.profiles) || !S.profiles.length) {
     pid = uid();
-    S.profiles = [{ id: pid, name: "Gagan", tasks: S.tasks || [], habits: S.habits || [], goals: S.goals || [] }];
+    S.profiles = [{ id: pid, name: "Guest", tasks: S.tasks || [], habits: S.habits || [], goals: S.goals || [] }];
     S.activeProfile = pid;
   }
   var pid;
@@ -786,6 +787,7 @@
       h.log = Array.isArray(h.log) ? h.log : [];
     });
   });
+  if (S.profiles.length === 1 && S.profiles[0].name === "Gagan" && !S.tasks.length && !S.habits.length && !S.goals.length) S.profiles[0].name = "Guest";
   var viewDay = day();
   function wkKey() {
     var d = /* @__PURE__ */ new Date();
@@ -893,14 +895,14 @@
     });
   }
   function pct() {
-    var t = day(), tasks = S.tasks.filter(function(x) {
+    var t = day(), tasks2 = S.tasks.filter(function(x) {
       return (x.createdOn || t) <= t && (!x.doneOn || x.doneOn >= t);
-    }), b = tasks.filter(function(x) {
+    }), b = tasks2.filter(function(x) {
       return x.doneOn === t || !x.doneOn && x.done && x.on === t;
     }).length, c = S.habits.length, d = S.habits.filter(function(h) {
       return h.log.indexOf(t) >= 0;
     }).length;
-    return tasks.length + c ? Math.round((b + d) / (tasks.length + c) * 100) : 0;
+    return tasks2.length + c ? Math.round((b + d) / (tasks2.length + c) * 100) : 0;
   }
   function msg(p, n) {
     if (!n) return "Add one task or habit to start your day.";
@@ -915,22 +917,18 @@
     }) || S.profiles[0];
   }
   function head() {
-    var p = pct(), n = S.tasks.length + S.habits.length, hour = (/* @__PURE__ */ new Date()).getHours(), g = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening", name = profile().name, initial = name.trim().charAt(0).toUpperCase() || "P";
-    var panel = profileOpen ? '<div class="profile-panel"><h3>Switch profile</h3><select id="profilepick" aria-label="Active profile">' + S.profiles.map(function(p2) {
-      return '<option value="' + p2.id + '"' + (p2.id === S.activeProfile ? " selected" : "") + ">" + esc(p2.name) + "</option>";
-    }).join("") + '</select><form data-f="profile"><input id="newprofile" placeholder="New profile name" maxlength="32" autocomplete="off"><button class="btn">Add</button></form>' + (S.profiles.length > 1 ? '<button class="profile-remove" data-a="profilerem">Remove current profile</button>' : "") + "</div>" : "";
-    return '<div class="top"><div><div class="eyebrow">' + (S.tab === "today" ? "TODAY \xB7 " + (/* @__PURE__ */ new Date()).toLocaleDateString(void 0, { weekday: "long", month: "long", day: "numeric" }) : "MOMENTUM") + "</div><h1>" + (S.tab === "today" ? g + ", " + esc(name) : S.tab === "insights" ? "Insights" : S.tab === "habits" ? "Habits" : "Profile") + "</h1>" + (S.tab === "today" ? "<p>" + msg(p, n) + "</p>" : "") + "</div>" + (S.tab === "today" ? '<button class="profile-btn" data-a="tab" data-id="profile" aria-label="Profile"><span class="avatar">' + esc(initial) + "</span></button>" : "") + panel + "</div>" + (S.tab === "today" ? '<div class="progress-strip"><span>Today\u2019s progress</span><b>' + p + '%</b></div><div class="progress"><i style="width:' + p + '%"></i></div>' : "");
+    var p = pct(), n = S.tasks.length + S.habits.length, hour = (/* @__PURE__ */ new Date()).getHours(), g = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening", name = profile().name, initial = name.trim().charAt(0).toUpperCase() || "G", titles = { today: "Today", tasks: "To-do", habits: "Habits", insights: "Progress", goals: "Goals", profile: "Profile", settings: "Settings", menu: "Menu" }, title = titles[S.tab] || "Today";
+    return '<div class="top"><div><div class="eyebrow">MOMENTUM \xB7 ' + title.toUpperCase() + "</div><h1>" + (S.tab === "today" ? g + ", " + esc(name) : title) + "</h1>" + (S.tab === "today" ? "<p>" + msg(p, n) + "</p>" : "") + "</div>" + (S.tab === "today" ? '<button class="profile-btn" data-a="tab" data-id="menu" aria-label="Open menu"><span class="avatar">' + esc(initial) + "</span><span>\u2630</span></button>" : "") + "</div>" + (S.tab === "today" ? '<div class="progress-card"><div><h2>Today\u2019s progress</h2><p>' + p + '% complete</p></div><div class="progress-ring" style="--progress:' + p + '%"><b>' + p + "%</b></div></div>" : "");
   }
   function taskRow(x, done) {
-    return '<div class="task' + (done ? " done" : "") + '"><button class="chk" data-a="tog" data-id="' + x.id + '" aria-label="Toggle task">' + (done ? "\u2713" : "") + '</button><span class="tt">' + esc(x.t) + (x.due ? '<small class="hint"> \xB7 \u{1F514} ' + esc(x.due.replace("T", " ")) + "</small>" : "") + '</span><button class="ic' + (x.star ? " star" : "") + '" data-a="star" data-id="' + x.id + '" aria-label="Priority">' + (x.star ? "\u2605" : "\u2606") + "</button>" + (arm === x.id ? '<button class="arm" data-a="del" data-id="' + x.id + '">Delete?</button>' : '<button class="ic" data-a="arm" data-id="' + x.id + '" aria-label="Delete">\u2715</button>') + "</div>";
+    return '<div class="task' + (done ? " done" : "") + '"><button class="chk" data-a="tog" data-id="' + x.id + '" aria-label="Toggle task">' + (done ? "\u2713" : "") + '</button><span class="tt">' + esc(x.t) + (x.note ? "<small>" + esc(x.note) + "</small>" : "") + (x.due ? '<small class="hint"> \xB7 \u{1F514} ' + esc(x.due.replace("T", " ")) + "</small>" : "") + '</span><button class="ic" data-a="editTask" data-id="' + x.id + '" aria-label="Edit task">\u270E</button><button class="ic' + (x.star ? " star" : "") + '" data-a="star" data-id="' + x.id + '" aria-label="Priority">' + (x.star ? "\u2605" : "\u2606") + "</button>" + (arm === x.id ? '<button class="arm" data-a="del" data-id="' + x.id + '">Delete?</button>' : '<button class="ic" data-a="arm" data-id="' + x.id + '" aria-label="Delete">\u22EF</button>') + "</div>";
   }
   function today() {
     var t = viewDay, o = "";
-    o += '<form class="add" data-f="task"><input id="nt" placeholder="Add a task\u2026" maxlength="120" autocomplete="off"><button class="btn">Add</button><details><summary class="hint">\uFF0B Add reminder</summary><input id="ndue" type="datetime-local" aria-label="Reminder date and time"></details></form>';
     if (S.habits.length) {
-      o += '<div class="sec">Daily habits</div><div class="chips">' + S.habits.map(function(h) {
-        var on = h.log.indexOf(t) >= 0, s = streak(h);
-        return '<button class="chip' + (on ? " on" : "") + '" data-a="hab" data-id="' + h.id + '">' + h.e + " " + esc(h.n) + ' <span class="fl">\u{1F525}' + s + "</span></button>";
+      o += '<div class="sec"><span>Today\u2019s habits</span><button class="text-action" data-a="tab" data-id="habits">View all \u203A</button></div><div class="chips">' + S.habits.slice(0, 4).map(function(h) {
+        var on = h.log.indexOf(t) >= 0;
+        return '<button class="chip' + (on ? " on" : "") + '" data-a="hab" data-id="' + h.id + '">' + h.e + " " + esc(h.n) + ' <span class="fl">' + (on ? "\u2713" : "\u25CB") + "</span></button>";
       }).join("") + "</div>";
     }
     o += '<div class="sec"><span>Tasks</span><span class="daynav"><input type="date" id="viewday" value="' + t + '" aria-label="Choose day">' + (t !== day() ? '<button class="sm" data-a="daytoday">Today</button>' : "") + "</span></div>";
@@ -945,13 +943,28 @@
     });
     o += '<div class="card">' + (pending.length ? '<div class="section-label">To do \xB7 ' + pending.length + "</div>" + pending.map(function(x) {
       return taskRow(x, false);
-    }).join("") : done.length ? "" : '<div class="empty">Nothing planned. Add one small task above.</div>') + (done.length ? '<details class="completed-group"><summary>Completed \xB7 ' + done.length + "</summary>" + done.map(function(x) {
+    }).join("") : done.length ? "" : '<div class="empty">Nothing planned. Tap + to add one small task.</div>') + (done.length ? '<details class="completed-group"><summary>Completed \xB7 ' + done.length + "</summary>" + done.map(function(x) {
       return taskRow(x, true);
     }).join("") + "</details>" : "") + "</div>";
     return o;
   }
+  function tasks() {
+    var t = viewDay, list = S.tasks.filter(function(x) {
+      var created = x.createdOn || x.on || day();
+      return created <= t && (!x.doneOn || x.doneOn >= t);
+    }), done = list.filter(function(x) {
+      return x.doneOn === t || !x.doneOn && x.done && x.on === t;
+    }), pending = list.filter(function(x) {
+      return done.indexOf(x) < 0;
+    });
+    return '<div class="sec"><span>Plan your day</span><span class="daynav"><input type="date" id="viewday" value="' + t + '" aria-label="Choose day">' + (t !== day() ? '<button class="sm" data-a="daytoday">Today</button>' : "") + '</span></div><div class="card">' + (pending.length ? '<div class="section-label">To do \xB7 ' + pending.length + "</div>" + pending.map(function(x) {
+      return taskRow(x, false);
+    }).join("") : done.length ? "" : '<div class="empty">Nothing planned. Tap + to add a task.</div>') + (done.length ? '<details class="completed-group" open><summary>Completed \xB7 ' + done.length + "</summary>" + done.map(function(x) {
+      return taskRow(x, true);
+    }).join("") + "</details>" : "") + "</div>";
+  }
   function goals() {
-    var o = '<div class="sec">Goals</div><form class="form" data-f="goal"><input id="gt" placeholder="New goal, e.g. Read books" maxlength="80"><input id="gn" type="number" min="1" placeholder="Target" inputmode="numeric"><select id="gp"><option value="week">Weekly</option><option value="month" selected>Monthly</option><option value="year">Yearly</option></select><button class="btn">Add</button></form>';
+    var o = '<div class="sec"><span>Goals</span><button class="text-action" data-a="quick" data-id="goal">\uFF0B Add goal</button></div>';
     ["week", "month", "year"].forEach(function(p) {
       var l = S.goals.filter(function(g) {
         return g.p === p;
@@ -960,14 +973,14 @@
       o += '<div class="sec">' + PL[p] + "</div>";
       l.forEach(function(g) {
         var r = Math.min(100, Math.round(g.prog / g.target * 100)), hit = g.prog >= g.target;
-        o += '<div class="card' + (hit ? " hit" : "") + '"><div class="row"><span class="gt">' + esc(g.t) + (hit ? " \u{1F3C6}" : "") + "</span>" + (arm === g.id ? '<button class="arm" data-a="delg" data-id="' + g.id + '">Delete?</button>' : '<button class="ic" data-a="arm" data-id="' + g.id + '" aria-label="Delete goal">\u2715</button>') + '</div><div class="bar"><i style="width:' + r + '%"></i></div><div class="row"><span class="sub">' + g.prog + " of " + g.target + " (" + r + "%)" + (g.hist ? " \xB7 hit " + g.hist + "x before" : "") + '</span><span><button class="sm" data-a="gm" data-id="' + g.id + '" aria-label="Minus one">\u22121</button> <button class="sm" data-a="gp" data-id="' + g.id + '" aria-label="Plus one">+1</button></span></div></div>';
+        o += '<div class="card goal-card"><button class="goal-open" data-a="editGoal" data-id="' + g.id + '"><span class="gt">' + esc(g.t) + (hit ? " \u{1F3C6}" : "") + '</span><span class="ic">\u270E</span></button>' + (g.note ? '<p class="remark">' + esc(g.note) + "</p>" : "") + '<div class="bar"><i style="width:' + r + '%"></i></div><div class="row"><span class="sub">' + g.prog + " of " + g.target + " (" + r + "%)" + (g.hist ? " \xB7 hit " + g.hist + "x before" : "") + '</span><span><button class="sm" data-a="gm" data-id="' + g.id + '" aria-label="Minus one">\u22121</button> <button class="sm" data-a="gp" data-id="' + g.id + '" aria-label="Plus one">+1</button></span></div></div>';
       });
     });
     if (!S.goals.length) o += '<div class="card empty">Set a weekly, monthly or yearly target. Tap +1 whenever you make progress.</div>';
     return o;
   }
   function habits() {
-    var o = '<div class="sec">Habits <span class="hint">' + S.habits.length + '</span></div><form class="add" data-f="habit"><input id="nh" placeholder="Add a habit\u2026" maxlength="40" autocomplete="off"><button class="btn">Add</button></form>';
+    var o = '<div class="sec"><span>Your habits \xB7 ' + S.habits.length + '</span><button class="text-action" data-a="quick" data-id="habit">\uFF0B Add habit</button></div>';
     o += S.habits.map(function(h) {
       var s = streak(h), w = "";
       for (var i = 6; i >= 0; i--) {
@@ -977,7 +990,7 @@
         var k = day(d);
         w += '<button class="dot' + (h.log.indexOf(k) >= 0 ? " on" : "") + (k === day() ? " today" : "") + '" data-a="hdaydetail" data-id="' + h.id + '" data-d="' + k + '" aria-label="Details for ' + k + '"><span>' + "SMTWTFS"[d.getDay()] + "</span><b>" + (h.log.indexOf(k) >= 0 ? "\u2713" : d.getDate()) + "</b></button>";
       }
-      return '<div class="card"><div class="row"><div><div class="gt">' + h.e + " " + esc(h.n) + '</div><div class="sub">Best ' + best(h) + " days \xB7 " + h.log.length + ' check-ins</div></div><button class="streak-button" data-a="streakdetail" data-id="' + h.id + '"><b>\u{1F525} ' + s + '</b><span>day streak</span></button></div><div class="week">' + w + '</div><div class="row habit-actions"><span class="hint">Tap a day for details</span>' + (arm === h.id ? '<button class="arm" data-a="delh" data-id="' + h.id + '">Delete?</button>' : '<button class="ic" data-a="arm" data-id="' + h.id + '" aria-label="Delete habit">\u2715</button>') + "</div></div>";
+      return '<div class="card"><div class="row"><button class="habit-title" data-a="editHabit" data-id="' + h.id + '"><span><b class="gt">' + h.e + " " + esc(h.n) + "</b>" + (h.note ? "<small>" + esc(h.note) + "</small>" : "") + "<small>Best " + best(h) + " days \xB7 " + h.log.length + ' check-ins</small></span><span class="ic">\u270E</span></button><button class="streak-button" data-a="streakdetail" data-id="' + h.id + '"><b>\u{1F525} ' + s + '</b><span>day streak \xB7 details</span></button></div><div class="week">' + w + '</div><div class="row habit-actions"><span class="hint">Tap a day to update its check-in</span>' + (arm === h.id ? '<button class="arm" data-a="delh" data-id="' + h.id + '">Delete?</button>' : '<button class="ic" data-a="arm" data-id="' + h.id + '" aria-label="Delete habit">\u22EF</button>') + "</div></div>";
     }).join("");
     if (!S.habits.length) o += '<div class="card empty">Habits build streaks. Add one and tick it each day.</div>';
     return o;
@@ -1008,17 +1021,50 @@
       return '<div class="card row"><span>' + h.e + " " + esc(h.n) + "</span><b>\u{1F525} " + streak(h) + " day" + (streak(h) === 1 ? "" : "s") + "</b></div>";
     }).join("") : '<div class="card empty">Add a habit to start building your streaks.</div>');
   }
+  function menuPage() {
+    var links = [["goals", "\u25CE", "Goals", "Set targets and track progress"], ["insights", "\u25F7", "Progress", "See your consistency over time"], ["profile", "\u25CB", "Profile", "Switch profiles or edit your name"], ["settings", "\u2699", "Settings", "Theme, wallpaper, fonts and data"]];
+    return '<div class="sec">Your space</div><div class="menu-grid">' + links.map(function(x) {
+      return '<button class="card menu-link" data-a="tab" data-id="' + x[0] + '"><span class="menu-ico">' + x[1] + "</span><span><b>" + x[2] + "</b><small>" + x[3] + '</small></span><span class="menu-arrow">\u203A</span></button>';
+    }).join("") + '</div><div class="sec">Quick actions</div><div class="card settings-list"><button data-a="exp">Export a backup <span>\u203A</span></button><button data-a="imp">Restore a backup <span>\u203A</span></button>' + (deferred ? '<button data-a="inst">Install Momentum <span>\u203A</span></button>' : "") + '</div><p class="privacy-note">Your habits, tasks and profiles stay on this device.</p>';
+  }
   function profilePage() {
-    var name = profile().name, initial = name.trim().charAt(0).toUpperCase() || "P";
-    return '<div class="card profile-hero"><span class="avatar">' + esc(initial) + "</span><h2>" + esc(name) + '</h2><p>Build better habits, one day at a time.</p></div><div class="sec">Profiles</div><div class="card"><select id="profilepick" aria-label="Active profile">' + S.profiles.map(function(p) {
-      return '<option value="' + p.id + '"' + (p.id === S.activeProfile ? " selected" : "") + ">" + esc(p.name) + "</option>";
-    }).join("") + '</select><form class="profile-form" data-f="profile"><input id="newprofile" placeholder="Add a profile" maxlength="32"><button class="btn">Add</button></form>' + (S.profiles.length > 1 ? '<button class="profile-remove" data-a="profilerem">Remove current profile</button>' : "") + '</div><div class="sec">Personal goals</div>' + goals() + '<div class="sec">Preferences & data</div><div class="card settings-list"><button data-a="theme">Appearance <span>' + (S.theme === "dark" ? "Dark mode" : S.theme === "light" ? "Light mode" : "System default") + ' \u203A</span></button><button data-a="exp">Export backup <span>\u203A</span></button><button data-a="imp">Restore backup <span>\u203A</span></button>' + (deferred ? '<button data-a="inst">Install Momentum <span>\u203A</span></button>' : "") + "</div>";
+    var name = profile().name, initial = name.trim().charAt(0).toUpperCase() || "G";
+    return '<div class="card profile-hero"><span class="avatar">' + esc(initial) + "</span><h2>" + esc(name) + '</h2><p>Build better habits, one day at a time.</p><button class="text-action" data-a="editProfile">Edit profile name</button></div><div class="sec">Profiles</div><div class="card profile-list">' + S.profiles.map(function(p) {
+      return '<div class="profile-row"><button data-a="switchProfile" data-id="' + p.id + '"><span class="avatar">' + esc((p.name || "G").charAt(0).toUpperCase()) + "</span><span>" + esc(p.name) + "</span>" + (p.id === S.activeProfile ? "<b>Current</b>" : "") + '</button><button class="ic" data-a="renameProfile" data-id="' + p.id + '" aria-label="Rename profile">\u270E</button>' + (p.id === S.activeProfile && S.profiles.length > 1 ? '<button class="ic" data-a="profilerem" aria-label="Remove profile">\u22EF</button>' : "") + "</div>";
+    }).join("") + '<button class="text-action" data-a="quick" data-id="newProfile">\uFF0B Add profile</button></div><div class="sec">Your goals</div>' + goals();
+  }
+  function settingsPage() {
+    var accents = [["Green", "#1f9d4d"], ["Purple", "#7c5cf0"], ["Blue", "#2f8cf0"], ["Orange", "#f08a24"], ["Rose", "#d84a60"], ["Teal", "#129b91"]], walls = [["Plain", "plain"], ["Warm", "warm"], ["Lavender", "lavender"], ["Mint", "mint"]];
+    return '<div class="sec">Appearance</div><div class="card settings-card"><label>Theme</label><select id="themechoice"><option value="system"' + ((S.theme || "system") === "system" ? " selected" : "") + '>System default</option><option value="light"' + (S.theme === "light" ? " selected" : "") + '>Light</option><option value="dark"' + (S.theme === "dark" ? " selected" : "") + '>Dark</option></select><label>Accent colour</label><div class="swatches">' + accents.map(function(a) {
+      return '<button class="swatch' + ((S.accent || "#1f9d4d") === a[1] ? " selected" : "") + '" style="--swatch:' + a[1] + '" data-a="accent" data-id="' + a[1] + '" aria-label="' + a[0] + '"></button>';
+    }).join("") + '</div><label>Wallpaper</label><div class="wallpapers">' + walls.map(function(w) {
+      return '<button class="wallpaper wallpaper-' + w[1] + ((S.wallpaper || "warm") === w[1] ? " selected" : "") + '" data-a="wallpaper" data-id="' + w[1] + '">' + w[0] + "</button>";
+    }).join("") + '</div><label>Font</label><select id="fontchoice"><option value="system"' + ((S.font || "system") === "system" ? " selected" : "") + '>System</option><option value="dm"' + (S.font === "dm" ? " selected" : "") + '>DM Sans</option><option value="bricolage"' + (S.font === "bricolage" ? " selected" : "") + '>Bricolage</option></select><p class="hint">Google Fonts are used on the website. The APK stays offline and uses system fonts.</p></div><div class="sec">Your data</div><div class="card settings-list"><button data-a="exp">Export backup <span>\u203A</span></button><button data-a="imp">Restore backup <span>\u203A</span></button></div>';
   }
   function quickSheet() {
-    return quickOpen ? '<div class="sheet-back" data-a="quickclose"><section class="sheet" role="dialog" aria-modal="true" aria-label="Quick add"><div class="sheet-handle"></div><div class="row"><h2>Quick add</h2><button class="ic" data-a="quickclose" aria-label="Close">\xD7</button></div><form class="add" data-f="task"><input id="nt" placeholder="What do you need to do?" maxlength="120" autocomplete="off" autofocus><button class="btn">Add</button><details><summary class="hint">Add a reminder</summary><input id="ndue" type="datetime-local" aria-label="Reminder date and time"></details></form></section></div>' : "";
+    if (!quickOpen) return "";
+    var type = quickOpen, edit = !!editItem && (type.indexOf("edit") === 0 || type === "renameProfile"), obj = edit ? type === "editTask" ? find("tasks", editItem) : type === "editHabit" ? find("habits", editItem) : type === "editGoal" ? find("goals", editItem) : type === "renameProfile" ? S.profiles.find(function(p) {
+      return p.id === editItem;
+    }) : profile() : null, title = edit ? "Edit " + (type === "editTask" ? "task" : type === "editHabit" ? "habit" : type === "editGoal" ? "goal" : "profile") : type === "editProfile" ? "Edit profile" : type === "habit" ? "New habit" : type === "goal" ? "New goal" : type === "newProfile" ? "New profile" : "New task", form = type === "editTask" ? "editTask" : type === "editHabit" ? "editHabit" : type === "editGoal" ? "editGoal" : type === "renameProfile" ? "renameProfile" : type === "editProfile" ? "editProfile" : type === "newProfile" ? "newProfile" : type === "habit" ? "quickHabit" : type === "goal" ? "quickGoal" : "quickTask", body = "";
+    if (form === "quickTask" || form === "editTask") {
+      var t = obj || {};
+      body = '<form data-f="' + form + '"><label>Task</label><input id="qtitle" maxlength="120" value="' + esc(t.t || "") + '" placeholder="What needs doing?" required><label>Date</label><input id="qdate" type="date" value="' + (t.createdOn || viewDay) + '"><label>Reminder (optional)</label><input id="qdue" type="datetime-local" value="' + esc(t.due || "") + '"><label>Note (optional)</label><textarea id="qnote" maxlength="300" placeholder="Add a detail">' + esc(t.note || "") + '</textarea><button class="btn">Save task</button>' + (edit ? '<button type="button" class="btn danger" data-a="del" data-id="' + t.id + '">Delete task</button>' : "") + "</form>";
+    }
+    if (form === "quickHabit" || form === "editHabit") {
+      var h = obj || {};
+      body = '<form data-f="' + form + '"><label>Habit</label><input id="qtitle" maxlength="40" value="' + esc(h.n || "") + '" placeholder="e.g. Read for 10 minutes" required><label>Icon</label><input id="qicon" maxlength="4" value="' + esc(h.e || "\u{1F4A7}") + '" placeholder="\u{1F4A7}"><label>Note (optional)</label><textarea id="qnote" maxlength="300" placeholder="What does this habit mean to you?">' + esc(h.note || "") + '</textarea><button class="btn">Save habit</button>' + (edit ? '<button type="button" class="btn danger" data-a="delh" data-id="' + h.id + '">Delete habit</button>' : "") + "</form>";
+    }
+    if (form === "quickGoal" || form === "editGoal") {
+      var g = obj || {};
+      body = '<form data-f="' + form + '"><label>Goal</label><input id="qtitle" maxlength="80" value="' + esc(g.t || "") + '" placeholder="What do you want to achieve?" required><div class="row"><div><label>Target</label><input id="qtarget" type="number" min="1" value="' + (g.target || "") + '" required></div><div><label>Timeframe</label><select id="qperiod"><option value="week"' + (g.p === "week" ? " selected" : "") + '>Weekly</option><option value="month"' + ((g.p || "month") === "month" ? " selected" : "") + '>Monthly</option><option value="year"' + (g.p === "year" ? " selected" : "") + '>Yearly</option></select></div></div><label>Note (optional)</label><textarea id="qnote" maxlength="300" placeholder="Add a reminder or reason">' + esc(g.note || "") + '</textarea><button class="btn">Save goal</button>' + (edit ? '<button type="button" class="btn danger" data-a="delg" data-id="' + g.id + '">Delete goal</button>' : "") + "</form>";
+    }
+    if (form === "editProfile" || form === "newProfile" || form === "renameProfile") {
+      body = '<form data-f="' + form + '"><label>Profile name</label><input id="qtitle" maxlength="32" value="' + (obj ? esc(obj.name) : "") + '" placeholder="e.g. Devanshu" required><button class="btn">Save profile</button></form>';
+    }
+    return '<div class="sheet-back" data-a="quickclose"><section class="sheet" role="dialog" aria-modal="true"><div class="sheet-handle"></div><div class="row"><h2>' + title + '</h2><button class="ic" data-a="quickclose" aria-label="Close">\xD7</button></div>' + body + "</section></div>";
   }
   function foot() {
-    return '<div class="foot">' + (deferred ? '<button data-a="inst">Install</button>' : "") + '<button data-a="theme">' + (S.theme === "light" ? "Dark mode" : S.theme === "dark" ? "Light mode" : "Theme") + '</button><button data-a="exp">Backup</button><button data-a="imp">Restore</button></div>';
+    return "";
   }
   function habitModal() {
     if (!habitDetail) return "";
@@ -1026,22 +1072,32 @@
     if (!h) return "";
     var d = habitDetail.date || day(), checked = h.log.indexOf(d) >= 0, dt = /* @__PURE__ */ new Date(d + "T12:00:00"), label = dt.toLocaleDateString(void 0, { weekday: "long", month: "long", day: "numeric" }), run = streakThrough(h, d), wk = "";
     for (var i = 6; i >= 0; i--) {
-      var x = /* @__PURE__ */ new Date();
-      x.setHours(12, 0, 0, 0);
+      var x = /* @__PURE__ */ new Date(d + "T12:00:00");
       x.setDate(x.getDate() - i);
       var k = day(x);
       wk += "<span>" + "SMTWTFS"[x.getDay()] + '<b class="' + (h.log.indexOf(k) >= 0 ? "on" : "") + '">' + (h.log.indexOf(k) >= 0 ? "\u2713" : x.getDate()) + "</b></span>";
     }
-    return '<div class="modal-backdrop" data-a="habitclose"><section class="modal" role="dialog" aria-modal="true" aria-label="Habit check-in detail"><h2>' + h.e + " " + esc(h.n) + "</h2><p>" + label + "</p><p><b>" + (checked ? "Completed" : "Not checked in") + "</b>" + (checked ? " \xB7 " + run + " day streak at this date" : "") + '</p><div class="week-mini">' + wk + '</div><div class="row"><button class="sm" data-a="habitclose">Close</button><button class="btn" data-a="hdaytoggle" data-id="' + h.id + '" data-d="' + d + '">' + (checked ? "Undo check-in" : "Mark complete") + "</button></div></section></div>";
+    return '<div class="modal-backdrop" data-a="habitclose"><section class="modal" role="dialog" aria-modal="true" aria-label="Habit check-in detail"><h2>' + h.e + " " + esc(h.n) + "</h2>" + (h.note ? "<p>" + esc(h.note) + "</p>" : "") + '<label>Check-in date</label><input id="habitdate" type="date" max="' + day() + '" value="' + d + '"><p>' + label + " \xB7 " + (checked ? "Completed" : "Not checked in") + (checked ? " \xB7 " + run + " day streak through this date" : "") + '</p><div class="week-mini">' + wk + '</div><div class="row"><button class="sm" data-a="editHabit" data-id="' + h.id + '">Edit habit</button><button class="btn" data-a="hdaytoggle" data-id="' + h.id + '" data-d="' + d + '">' + (checked ? "Undo check-in" : "Mark complete") + '</button></div><button class="text-action" data-a="habitclose">Close</button></section></div>';
   }
   function render() {
-    var v = S.tab === "insights" ? insights() : S.tab === "habits" ? habits() : S.tab === "profile" ? profilePage() : today();
+    var v = S.tab === "insights" ? insights() : S.tab === "habits" ? habits() : S.tab === "tasks" ? tasks() : S.tab === "goals" ? goals() : S.tab === "profile" ? profilePage() : S.tab === "settings" ? settingsPage() : S.tab === "menu" ? menuPage() : today();
     document.getElementById("app").innerHTML = head() + v + foot() + habitModal() + quickSheet();
-    if (!S.theme || S.theme === "system") document.documentElement.removeAttribute("data-theme");
-    else document.documentElement.dataset.theme = S.theme;
-    document.getElementById("nav").innerHTML = [["today", "\u2302", "Today"], ["insights", "\u25F7", "Insights"], ["quick", "\uFF0B", ""], ["habits", "\u25A6", "Habits"], ["profile", "\u25CB", "Profile"]].map(function(t) {
+    var r = document.documentElement;
+    r.dataset.wallpaper = S.wallpaper || "warm";
+    r.dataset.font = S.font || "system";
+    r.style.setProperty("--accent", S.accent || "#1f9d4d");
+    r.style.setProperty("--teal", S.accent || "#1f9d4d");
+    r.style.setProperty("--sun", S.accent || "#1f9d4d");
+    r.style.setProperty("--btn", S.accent || "#1f9d4d");
+    if (!S.theme || S.theme === "system") r.removeAttribute("data-theme");
+    else r.dataset.theme = S.theme;
+    document.getElementById("nav").innerHTML = [["today", "\u2302", "Today"], ["habits", "\u25CC", "Habits"], ["quick", "\uFF0B", ""], ["tasks", "\u2637", "To-do"], ["menu", "\u2630", "Menu"]].map(function(t) {
       return '<button class="' + (S.tab === t[0] ? "on" : "") + (t[0] === "quick" ? " nav-add" : "") + '" data-a="' + (t[0] === "quick" ? "quick" : "tab") + '" data-id="' + t[0] + '"><span>' + t[1] + "</span>" + (t[2] ? "<small>" + t[2] + "</small>" : "") + "</button>";
     }).join("");
+    if (quickOpen) {
+      var qi = document.getElementById("qtitle");
+      if (qi) qi.focus();
+    }
   }
   function find(a, id) {
     return S[a].filter(function(x) {
@@ -1067,15 +1123,49 @@
       return after();
     }
     if (a === "quick") {
-      quickOpen = true;
+      quickOpen = ["task", "habit", "goal", "newProfile"].indexOf(id) >= 0 ? id : S.tab === "habits" ? "habit" : S.tab === "goals" ? "goal" : "task";
+      editItem = null;
       return render();
     }
     if (a === "quickclose") {
       if (e.target === b || b.tagName === "BUTTON") {
-        quickOpen = false;
+        quickOpen = "";
+        editItem = null;
         return render();
       }
       return;
+    }
+    if (a === "editTask" || a === "editHabit" || a === "editGoal") {
+      quickOpen = a;
+      editItem = id;
+      habitDetail = null;
+      return render();
+    }
+    if (a === "editProfile") {
+      quickOpen = "editProfile";
+      editItem = S.activeProfile;
+      return render();
+    }
+    if (a === "switchProfile") {
+      var sp = S.profiles.find(function(x) {
+        return x.id === id;
+      });
+      if (sp) {
+        S.activeProfile = sp.id;
+        S.tasks = sp.tasks;
+        S.habits = sp.habits;
+        S.goals = sp.goals;
+        viewDay = day();
+        return after();
+      }
+    }
+    if (a === "accent") {
+      S.accent = id;
+      return after();
+    }
+    if (a === "wallpaper") {
+      S.wallpaper = id;
+      return after();
     }
     if (a === "profilemenu") {
       profileOpen = !profileOpen;
@@ -1136,6 +1226,8 @@
         return x.id !== id;
       });
       arm = null;
+      quickOpen = "";
+      editItem = null;
       return after();
     }
     if (a === "delg") {
@@ -1143,6 +1235,8 @@
         return x.id !== id;
       });
       arm = null;
+      quickOpen = "";
+      editItem = null;
       return after();
     }
     if (a === "delh") {
@@ -1150,6 +1244,8 @@
         return x.id !== id;
       });
       arm = null;
+      quickOpen = "";
+      editItem = null;
       return after();
     }
     if (a === "hab" || a === "hday") {
@@ -1232,7 +1328,7 @@
             S = d;
             if (!Array.isArray(S.profiles) || !S.profiles.length) {
               var pid2 = uid();
-              S.profiles = [{ id: pid2, name: "Gagan", tasks: S.tasks, habits: S.habits, goals: S.goals }];
+              S.profiles = [{ id: pid2, name: "Guest", tasks: S.tasks, habits: S.habits, goals: S.goals }];
               S.activeProfile = pid2;
             }
             var ap = S.profiles.find(function(x) {
@@ -1261,6 +1357,102 @@
   document.addEventListener("submit", function(e) {
     e.preventDefault();
     var f = e.target.dataset.f;
+    if (f === "quickTask") {
+      var qt = document.getElementById("qtitle").value.trim();
+      if (!qt) return;
+      var due = document.getElementById("qdue").value, nt = { id: uid(), t: qt, note: document.getElementById("qnote").value.trim(), done: false, star: false, createdOn: document.getElementById("qdate").value || viewDay };
+      S.tasks.push(nt);
+      quickOpen = "";
+      after();
+      if (due) scheduleReminder(nt, due);
+      return;
+    }
+    if (f === "editTask") {
+      var et = find("tasks", editItem), etitle = document.getElementById("qtitle").value.trim();
+      if (!et || !etitle) return;
+      var ndue = document.getElementById("qdue").value;
+      if (et.due !== ndue) {
+        cancelReminder(et);
+        et.reminderId = null;
+      }
+      et.t = etitle;
+      et.note = document.getElementById("qnote").value.trim();
+      et.createdOn = document.getElementById("qdate").value || et.createdOn;
+      if (ndue) {
+        et.due = ndue;
+        scheduleReminder(et, ndue);
+      } else et.due = "";
+      quickOpen = "";
+      editItem = null;
+      after();
+      return;
+    }
+    if (f === "quickHabit") {
+      var hn = document.getElementById("qtitle").value.trim();
+      if (!hn) return;
+      S.habits.push({ id: uid(), n: hn, e: document.getElementById("qicon").value.trim() || "\u2728", note: document.getElementById("qnote").value.trim(), log: [] });
+      quickOpen = "";
+      return after();
+    }
+    if (f === "editHabit") {
+      var eh = find("habits", editItem), ehn = document.getElementById("qtitle").value.trim();
+      if (!eh || !ehn) return;
+      eh.n = ehn;
+      eh.e = document.getElementById("qicon").value.trim() || eh.e;
+      eh.note = document.getElementById("qnote").value.trim();
+      quickOpen = "";
+      editItem = null;
+      return after();
+    }
+    if (f === "quickGoal") {
+      var qgn = document.getElementById("qtitle").value.trim(), qgt = parseInt(document.getElementById("qtarget").value, 10), qgp = document.getElementById("qperiod").value;
+      if (!qgn || !(qgt > 0)) {
+        toast("Add a goal name and target");
+        return;
+      }
+      S.goals.push({ id: uid(), t: qgn, target: qgt, p: qgp, prog: 0, note: document.getElementById("qnote").value.trim(), key: key(qgp), hist: 0 });
+      quickOpen = "";
+      return after();
+    }
+    if (f === "editGoal") {
+      var eg = find("goals", editItem), egt = document.getElementById("qtitle").value.trim(), egtarget = parseInt(document.getElementById("qtarget").value, 10), egp = document.getElementById("qperiod").value;
+      if (!eg || !egt || !(egtarget > 0)) {
+        toast("Add a goal name and target");
+        return;
+      }
+      if (eg.p !== egp) {
+        eg.p = egp;
+        eg.prog = 0;
+        eg.key = key(egp);
+      }
+      eg.t = egt;
+      eg.target = egtarget;
+      eg.note = document.getElementById("qnote").value.trim();
+      quickOpen = "";
+      editItem = null;
+      return after();
+    }
+    if (f === "editProfile" || f === "renameProfile" || f === "newProfile") {
+      var pn = document.getElementById("qtitle").value.trim();
+      if (!pn) return;
+      if (f === "editProfile") profile().name = pn.slice(0, 32);
+      else if (f === "renameProfile") {
+        var rp = S.profiles.find(function(p2) {
+          return p2.id === editItem;
+        });
+        if (rp) rp.name = pn.slice(0, 32);
+      } else {
+        var np = { id: uid(), name: pn.slice(0, 32), tasks: [], habits: [], goals: [] };
+        S.profiles.push(np);
+        S.activeProfile = np.id;
+        S.tasks = np.tasks;
+        S.habits = np.habits;
+        S.goals = np.goals;
+      }
+      quickOpen = "";
+      editItem = null;
+      return after();
+    }
     if (f === "task") {
       var v = document.getElementById("nt").value.trim();
       if (!v) return;
@@ -1305,20 +1497,22 @@
     render();
   });
   document.addEventListener("change", function(e) {
-    if (e.target.id === "profilepick") {
-      var p = S.profiles.find(function(x) {
-        return x.id === e.target.value;
-      });
-      if (p) {
-        S.activeProfile = p.id;
-        S.tasks = p.tasks;
-        S.habits = p.habits;
-        S.goals = p.goals;
-        viewDay = day();
-        profileOpen = false;
-        save();
-        render();
+    if (e.target.id === "themechoice") {
+      S.theme = e.target.value;
+      return after();
+    }
+    if (e.target.id === "fontchoice") {
+      S.font = e.target.value;
+      return after();
+    }
+    if (e.target.id === "habitdate") {
+      var v = e.target.value;
+      if (v && v <= day()) {
+        habitDetail.date = v;
+        return render();
       }
+      toast("Choose today or an earlier day");
+      return render();
     }
     if (e.target.id === "viewday") {
       var v = e.target.value;

@@ -9,11 +9,13 @@ user-controlled backup. Re-enable network access deliberately if adding online A
 
 ## Features
 
-- Minimal five-action navigation: Today, Insights, Quick Add, Habits, and Profile.
-- Quick Add opens a focused bottom sheet so a task can be entered immediately, with an optional reminder.
-- Separate Insights view for completion activity and active habit streaks.
-- Profile screen groups local profiles, personal goals, appearance, and backup controls.
-- Saved light or dark theme.
+- Warm, minimal interface with bottom navigation for Today, Habits, Quick Add, To-do, and Menu.
+- Quick Add follows the current section, opening a task, habit, or goal form as appropriate.
+- Menu groups Goals, Progress, Profile, Settings, backups, and install controls.
+- Local profiles can be switched, added, renamed, and removed. A new empty install starts as Guest.
+- Task, habit, and goal notes; tasks and habits can be edited, and dated habit check-ins can be corrected.
+- Settings include system/light/dark themes, accent colours, wallpaper presets, and font choices.
+- Saved system, light, or dark theme, accent, wallpaper, and font preference.
 - Multiple local profiles, each with separate habits, goals, and tasks.
 - Date-by-date task history grouped into To do and Completed.
 - Compact seven-day habit view. Tap a day or streak count for check-in details; check in from the detail card or with one tap from Today.
